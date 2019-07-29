@@ -24,8 +24,8 @@ by grDevices. For a comparison with the default devices, see the
 
 ## Installation
 
-The package is currently under development but will be released on CRAN
-shortly.
+The package can be installed from CRAN with `install.packages('ragg')`
+or, if the development version is desired, directly from github:
 
 ``` r
 # install.packages('devtools')
@@ -48,7 +48,7 @@ build-in devices, includes:
     should be identical)
 
 You can use it like any other device. The main functions are `agg_png()`
-and `agg_tiff()`, both have arguments that closely match that of the
+and `agg_tiff()`, both have arguments that closely match those of the
 `png()` and `tiff()` functions, so switching over should be easy.
 
 ``` r

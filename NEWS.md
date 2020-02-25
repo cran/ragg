@@ -1,6 +1,9 @@
-# ragg 0.1.3
+# ragg 0.1.4
 
-# ragg (development version)
+* Fix a bug in AGG's font manager that ignored the font index when it stored and
+  retrieved cached faces
+
+# ragg 0.1.3
 
 * Fix bug preventing ragg from displaying 50% transparent black
 * Another attempt at fixing compilation on mac build machines

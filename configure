@@ -1,4 +1,4 @@
-# Anticonf (tm) script by Jeroen Ooms, Jim Hester (2019)
+# Anticonf (tm) script by Jeroen Ooms, Jim Hester (2020)
 # This script will query 'pkg-config' for the required cflags and ldflags.
 # If pkg-config is unavailable or does not find the library, try setting
 # INCLUDE_DIR and LIB_DIR manually via e.g:
@@ -8,11 +8,11 @@ PLATFORM=`uname`
 
 # Library settings
 PKG_CONFIG_NAME="freetype2 libpng libtiff-4"
-PKG_DEB_NAME="libfreetype6-dev, libpng-dev, libtiff5-dev"
-PKG_RPM_NAME="freetype-devel, libpng-devel, libtiff-devel"
-PKG_CSW_NAME="libfreetype_dev, libpng16_dev, libtiff_dev"
-PKG_BREW_NAME="freetype libpng libtiff zlib"
-PKG_TEST_HEADER="#include <ft2build.h>\n#include <png.h>\n#include <tiffio.h>\n"
+PKG_DEB_NAME="libfreetype6-dev, libpng-dev libtiff5-dev libjpeg-dev"
+PKG_RPM_NAME="freetype-devel libpng-devel libtiff-devel libjpeg-turbo-devel"
+PKG_CSW_NAME="libfreetype_dev libpng16_dev libtiff_dev libjpeg_dev"
+PKG_BREW_NAME="freetype libpng libtiff zlib libjpeg-turbo"
+PKG_TEST_HEADER="#include <ft2build.h>\n#include <png.h>\n#include <tiffio.h>\n#include <jpeglib.h>\n"
 PKG_LIBS="-lfreetype -lpng16 -ltiff -lz -ljpeg -lbz2"
 PKG_CFLAGS=""
 
@@ -34,14 +34,16 @@ elif [ "$PLATFORM" = "Darwin" ]; then
   if [ $? -eq 0 ]; then
     BREWDIR=`brew --prefix`
   else
-    . tools/autobrew
+    curl -sfL "https://jeroen.github.io/autobrew/ragg" > autobrew
+    . autobrew
   fi
-  PKG_CFLAGS="-I$BREWDIR/opt/freetype/include/freetype2 -I$BREWDIR/opt/libpng/include -I$BREWDIR/opt/libtiff/include"
+  PKG_CFLAGS="-I$BREWDIR/opt/freetype/include/freetype2 -I$BREWDIR/opt/libpng/include -I$BREWDIR/opt/libtiff/include -I$BREWDIR/opt/libjpeg/include"
   PKG_LIBS="-L$BREWDIR/opt/freetype/lib -L$BREWDIR/opt/libpng/lib -L$BREWDIR/opt/libtiff/lib -L$BREWDIR/opt/libjpeg/lib ${PKG_LIBS}"
 elif [ $R_HAS_PKG_CONFIG ]; then
   echo "Found pkg-config cflags and libs!"
   PKG_CFLAGS=`pkg-config --cflags ${PKG_CONFIG_NAME}`
   PKG_LIBS=`pkg-config --libs ${PKG_CONFIG_NAME}`
+  PKG_LIBS="$PKG_LIBS -ljpeg"
 
   # Test configuration
   printf "$PKG_TEST_HEADER" | ${CC} ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} -E -xc - >/dev/null 2>&1 || R_CONFIG_ERROR=1;
@@ -57,12 +59,12 @@ echo "Using PKG_CFLAGS=$PKG_CFLAGS"
 echo "Using PKG_LIBS=$PKG_LIBS"
 
 # Test configuration
-printf "$PKG_TEST_HEADER" | ${CC} ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} -E -xc - >/dev/null 2>&1 || R_CONFIG_ERROR=1;
+printf "$PKG_TEST_HEADER" | ${CC} ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} -E -xc - >/dev/null 2>configure.log
 
 # Customize the error
-if [ $R_CONFIG_ERROR ]; then
-  echo "------------------------- ANTICONF ERROR ---------------------------"
-  echo "Configuration failed because $PKG_CONFIG_NAME was not found. Try installing:"
+if [ $? -ne 0 ]; then
+  echo "-----------------------------[ ANTICONF ]-------------------------------"
+  echo "Configuration failed to find one of $PKG_CONFIG_NAME. Try installing:"
   echo " * deb: $PKG_DEB_NAME (Debian, Ubuntu, etc)"
   echo " * rpm: $PKG_RPM_NAME (Fedora, CentOS, RHEL)"
   echo " * csw: $PKG_CSW_NAME (Solaris)"
@@ -70,8 +72,10 @@ if [ $R_CONFIG_ERROR ]; then
   echo "PATH and PKG_CONFIG_PATH contains a $PKG_CONFIG_NAME.pc file. If pkg-config"
   echo "is unavailable you can set INCLUDE_DIR and LIB_DIR manually via:"
   echo "R CMD INSTALL --configure-vars='INCLUDE_DIR=... LIB_DIR=...'"
+  echo "-------------------------- [ERROR MESSAGE] ---------------------------"
+  cat configure.log
   echo "--------------------------------------------------------------------"
-  exit 1;
+  exit 1
 fi
 
 # Write to Makevars

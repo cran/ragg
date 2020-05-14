@@ -1,12 +1,13 @@
+#ifndef TEXTREN_INCLUDED
+#define TEXTREN_INCLUDED
+
 #include <vector>
+#include <cstdint>
+#include <systemfonts.h>
 
 #include "ragg.h"
 
 #include "agg_font_freetype.h"
-#include "fonts.h"
-
-#ifndef TEXTREN_INCLUDED
-#define TEXTREN_INCLUDED
 
 typedef agg::font_engine_freetype_int32 font_engine_type;
 typedef agg::font_cache_manager<font_engine_type> font_manager_type;
@@ -29,11 +30,7 @@ typedef agg::font_cache_manager<font_engine_type> font_manager_type;
  Modified 2019 by Thomas Lin Pedersen to work with const char*
  */
 
-#ifndef u_int32_t
-typedef uint32_t u_int32_t;
-#endif
-
-static const u_int32_t offsetsFromUTF8[6] = {
+static const uint32_t offsetsFromUTF8[6] = {
   0x00000000UL, 0x00003080UL, 0x000E2080UL,
   0x03C82080UL, 0xFA082080UL, 0x82082080UL
 };
@@ -59,9 +56,9 @@ static const char trailingBytesForUTF8[256] = {
  for all the characters.
  if sz = srcsz+1 (i.e. 4*srcsz+4 bytes), there will always be enough space.
  */
-static int u8_toucs(u_int32_t *dest, int sz, const char *src, int srcsz)
+static int u8_toucs(uint32_t *dest, int sz, const char *src, int srcsz)
 {
-  u_int32_t ch;
+  uint32_t ch;
   const char *src_end = src + srcsz;
   int nb;
   int i=0;
@@ -100,7 +97,7 @@ static int u8_toucs(u_int32_t *dest, int sz, const char *src, int srcsz)
 */
 
 class UTF_UCS {
-  std::vector<u_int32_t> buffer;
+  std::vector<uint32_t> buffer;
   
 public:
   UTF_UCS() {
@@ -109,7 +106,7 @@ public:
   }
   ~UTF_UCS() {
   }
-  u_int32_t * convert(const char * string, int &n_conv) {
+  uint32_t * convert(const char * string, int &n_conv) {
     int n_bytes = strlen(string) + 1;
     unsigned int max_size = n_bytes * 4;
     if (buffer.size() < max_size) {
@@ -123,23 +120,19 @@ public:
 };
 
 class TextRenderer {
-  font_engine_type feng;
-  font_manager_type fman;
   UTF_UCS converter;
   std::pair<std::string, int> last_font;
   agg::glyph_rendering last_gren;
   
 public:
   TextRenderer() :
-    feng(),
-    fman(feng),
     converter()
   {
     last_font = std::make_pair("", -1);
     last_gren = agg::glyph_ren_native_mono;
-    feng.hinting(true);
-    feng.flip_y(true);
-    feng.gamma(agg::gamma_power(1.8));
+    get_engine().hinting(true);
+    get_engine().flip_y(true);
+    get_engine().gamma(agg::gamma_power(1.8));
   }
   
   bool load_font(agg::glyph_rendering gren, const char *family, int face, 
@@ -151,15 +144,15 @@ public:
     if (!(gren == last_gren && 
         font.second == last_font.second && 
         font.first == last_font.first)) {
-      if (!feng.load_font(font.first.c_str(), font.second, gren)) {
+      if (!get_engine().load_font(font.first.c_str(), font.second, gren)) {
         Rf_warning("Unable to load font: %s", family);
         return false;
       }
       last_font = font;
       last_gren = gren;
-      feng.height(size);
-    } else if (size != feng.height()) {
-      feng.height(size);
+      get_engine().height(size);
+    } else if (size != get_engine().height()) {
+      get_engine().height(size);
     }
     return true;
   }
@@ -171,7 +164,7 @@ public:
   }
   
   void get_char_metric(int c, double *ascent, double *descent, double *width) {
-    const agg::glyph_cache* glyph = fman.glyph(c);
+    const agg::glyph_cache* glyph = get_manager().glyph(c);
     if (glyph) {
       *ascent = (double) -glyph->bounds.y1;
       *descent = (double) glyph->bounds.y2;
@@ -185,7 +178,7 @@ public:
                  renderer_solid &ren_solid) {
     agg::scanline_u8 sl;
     agg::rasterizer_scanline_aa<> ras;
-    agg::conv_curve<font_manager_type::path_adaptor_type> curves(fman.path_adaptor());
+    agg::conv_curve<font_manager_type::path_adaptor_type> curves(get_manager().path_adaptor());
     curves.approximation_scale(2.0);
     
     int size_out = 0;
@@ -196,22 +189,22 @@ public:
       rot = agg::deg2rad(-rot);
       agg::trans_affine mtx;
       mtx *= agg::trans_affine_rotation(rot);
-      feng.transform(mtx);
+      get_engine().transform(mtx);
     }
     
     x -= (width * hadj) * cos(rot);
     y -= (width * hadj) * sin(rot);
     
     while (*string_conv) {
-      const agg::glyph_cache* glyph = fman.glyph(*string_conv);
+      const agg::glyph_cache* glyph = get_manager().glyph(*string_conv);
       if (glyph) {
-        fman.add_kerning(&x, &y);
-        fman.init_embedded_adaptors(glyph, x, y);
+        get_manager().add_kerning(&x, &y);
+        get_manager().init_embedded_adaptors(glyph, x, y);
         switch(glyph->data_type) {
         default: break;
         case agg::glyph_data_gray8:
-          agg::render_scanlines(fman.gray8_adaptor(), 
-                                fman.gray8_scanline(), 
+          agg::render_scanlines(get_manager().gray8_adaptor(), 
+                                get_manager().gray8_scanline(), 
                                 ren_solid);
           break;
           
@@ -230,23 +223,36 @@ public:
     }
     
     if (rot != 0) {
-      feng.transform(agg::trans_affine());
+      get_engine().transform(agg::trans_affine());
     }
   }
 
 private:
+  inline font_engine_type& get_engine() {
+    static font_engine_type engine;
+    return engine;
+  }
+  
+  inline font_manager_type& get_manager() {
+    static font_manager_type manager(get_engine());
+    return manager;
+  }
+  
   double text_width(const uint32_t* string, int size) {
     double x = 0, y = 0, first_bearing = 0, last_bearing = 0;
     bool first = true;
     while (*string) {
-      const agg::glyph_cache* glyph = fman.glyph(*string);
+      const agg::glyph_cache* glyph = get_manager().glyph(*string);
       if (glyph) {
         if (first) {
           first_bearing = glyph->bounds.x1;
+          // On windows space will be given a left bearing of MAX_INT for god 
+          // knows what reason
+          if (first_bearing > glyph->advance_x) first_bearing = 0;
           first = false;
         }
         last_bearing = glyph->advance_x - glyph->bounds.x2;
-        fman.add_kerning(&x, &y);
+        get_manager().add_kerning(&x, &y);
         // increment pen position
         x += glyph->advance_x;
         y += glyph->advance_y;
@@ -254,6 +260,21 @@ private:
       string++;
     }
     return x - first_bearing - last_bearing;
+  }
+  
+  static std::pair<std::string, int> get_font_file(const char* family, int bold, 
+                                                   int italic, int symbol) {
+    const char* fontfamily = family;
+    if (symbol) {
+      fontfamily = "Symbol";
+    }
+    char *path = new char[PATH_MAX+1];
+    path[PATH_MAX] = '\0';
+    int index = locate_font(fontfamily, italic, bold, path, PATH_MAX);
+    std::pair<std::string, int> res {path, index};
+    delete[] path;
+    
+    return res;
   }
 };
 

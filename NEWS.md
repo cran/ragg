@@ -1,3 +1,15 @@
+# ragg 0.2.0
+
+* Fix compilation on R <= 3.3 by including Rdynload.h explicitly
+* Fix a performance regression when plotting text (#33)
+* Fix erroneous width calculations of strings starting with a space on windows 
+  (#32)
+* Fix a bug in `agg_capture()` where the output became mangled if device 
+  height != width
+* Fix a bug in raster support where raster data did not get premultiplied before
+  rendering (#38, @yixuan)
+* Fix an integer overflow issue in the AGG source code
+
 # ragg 0.1.5
 
 * Fix compilation on macOS

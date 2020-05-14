@@ -18,6 +18,7 @@
 #' @param res The resolution of the device. This setting will govern how device
 #'   dimensions given in inches, centimeters, or millimeters will be converted
 #'   to pixels. Further, it will be used to scale text sizes and linewidths
+#' @param bg Same as `background` for compatibility with old graphic device APIs
 #'
 #' @export
 #' 
@@ -29,12 +30,13 @@
 #' 
 agg_ppm <- function(filename = 'Rplot%03d.ppm', width = 480, height = 480, 
                     units = 'px', pointsize = 12, background = 'white', 
-                    res = 72) {
+                    res = 72, bg) {
   if (deparse(sys.call(), nlines = 1, width.cutoff = 500) == 'dev(filename = filename, width = dim[1], height = dim[2], ...)') {
     units <- 'in'
   }
   file <- validate_path(filename)
   dim <- get_dims(width, height, units, res)
+  background <- if (missing(bg)) background else bg
   .Call("agg_ppm_c", file, dim[1], dim[2], as.numeric(pointsize), background, 
         as.numeric(res), PACKAGE = 'ragg')
   invisible()
@@ -44,7 +46,7 @@ agg_ppm <- function(filename = 'Rplot%03d.ppm', width = 480, height = 480,
 #' 
 #' The PNG (Portable Network Graphic) format is one of the most ubiquitous 
 #' today, due to its versatiliity 
-#' and widespread support. It supports transparancy as well as both 8 and 16 bit
+#' and widespread support. It supports transparency as well as both 8 and 16 bit
 #' colour. The device uses default compression and filtering and will not use a
 #' colour palette as this is less useful for antialiased data. This means that 
 #' it might be possible to compress the resulting image even more if size is of
@@ -67,7 +69,7 @@ agg_ppm <- function(filename = 'Rplot%03d.ppm', width = 480, height = 480,
 #' 
 agg_png <- function(filename = 'Rplot%03d.png', width = 480, height = 480, 
                     units = 'px', pointsize = 12, background = 'white', 
-                    res = 72, bitsize = 8) {
+                    res = 72, bitsize = 8, bg) {
   if (deparse(sys.call(), nlines = 1, width.cutoff = 500) == 'dev(filename = filename, width = dim[1], height = dim[2], ...)') {
     units <- 'in'
   }
@@ -76,6 +78,7 @@ agg_png <- function(filename = 'Rplot%03d.png', width = 480, height = 480,
     stop('Only 8 and 16 bit is supported', call. = FALSE)
   }
   dim <- get_dims(width, height, units, res)
+  background <- if (missing(bg)) background else bg
   .Call("agg_png_c", file, dim[1], dim[2], as.numeric(pointsize), background, 
         as.numeric(res), as.integer(bitsize), PACKAGE = 'ragg')
   invisible()
@@ -118,7 +121,7 @@ agg_png <- function(filename = 'Rplot%03d.png', width = 480, height = 480,
 #' 
 agg_tiff <- function(filename = 'Rplot%03d.tiff', width = 480, height = 480, 
                     units = 'px', pointsize = 12, background = 'white', 
-                    res = 72, compression = 'none', bitsize = 8) {
+                    res = 72, compression = 'none', bitsize = 8, bg) {
   if (deparse(sys.call(), nlines = 1, width.cutoff = 500) == 'dev(filename = filename, width = dim[1], height = dim[2], ...)') {
     units <- 'in'
   }
@@ -138,8 +141,64 @@ agg_tiff <- function(filename = 'Rplot%03d.tiff', width = 480, height = 480,
     stop('Only 8 and 16 bit is supported', call. = FALSE)
   }
   dim <- get_dims(width, height, units, res)
+  background <- if (missing(bg)) background else bg
   .Call("agg_tiff_c", file, dim[1], dim[2], as.numeric(pointsize), background, 
         as.numeric(res), as.integer(bitsize), compression, encoding, 
+        PACKAGE = 'ragg')
+  invisible()
+}
+#' Draw to a JPEG file
+#' 
+#' The JPEG file format is a lossy compressed file format developed in 
+#' particular for digital photography. The format is not particularly 
+#' well-suited for line drawings and text of the type normally associated with 
+#' statistical plots as the compression algorithm creates noticable artefacts. 
+#' It is, however, great for saving image data, e.g. heightmaps etc. Thus, for
+#' standard plots, it would be better to use [agg_png()], but for plots that
+#' includes a high degree of raster image rendering this device will result in
+#' smaller plots with very little quality degradation.
+#' 
+#' @inheritParams agg_png
+#' @param quality An integer between `0` and `100` defining the quality/size 
+#' tradeoff. Setting this to `100` will result in no compression.
+#' @param smoothing A smoothing factor to apply before compression, from `0` (no
+#' smoothing) to `100` (full smoothing). Can also by `FALSE` (no smoothing) or 
+#' `TRUE` (full smoothing).
+#' @param method The compression algorithm to use. Either `'slow'`, `'fast'`, or
+#' `'float'`. Default is `'slow'` which works best for most cases. `'fast'` 
+#' should only be used when quality is below `97` as it may result in worse 
+#' performance at high quality settings. `'float'` is a legacy options that 
+#' calculate the compression using floating point precission instead of with 
+#' integers. It offers no quality benefit and is often much slower.
+#' 
+#' @note Smoothing is only applied if ragg has been compiled against a jpeg 
+#' library that supports smoothing.
+#' 
+#' @export
+#' 
+#' @examples 
+#' file <- tempfile(fileext = '.jpeg')
+#' agg_jpeg(file, quality = 50)
+#' plot(sin, -pi, 2*pi)
+#' dev.off()
+#' 
+agg_jpeg <- function(filename = 'Rplot%03d.jpeg', width = 480, height = 480, 
+                     units = 'px', pointsize = 12, background = 'white', 
+                     res = 72, quality = 75, smoothing = FALSE, method = 'slow', 
+                     bg) {
+  if (deparse(sys.call(), nlines = 1, width.cutoff = 500) == 'dev(filename = filename, width = dim[1], height = dim[2], ...)') {
+    units <- 'in'
+  }
+  file <- validate_path(filename)
+  quality <- min(100, max(0, quality))
+  if (is.logical(smoothing)) smoothing <- if (smoothing) 100 else 0
+  smoothing <- min(100, max(0, smoothing))
+  method <- match.arg(tolower(method), c('slow', 'fast', 'float'))
+  method <- match(method, c('slow', 'fast', 'float')) - 1L
+  dim <- get_dims(width, height, units, res)
+  background <- if (missing(bg)) background else bg
+  .Call("agg_jpeg_c", file, dim[1], dim[2], as.numeric(pointsize), background, 
+        as.numeric(res), as.integer(quality), as.integer(smoothing), method, 
         PACKAGE = 'ragg')
   invisible()
 }
@@ -164,12 +223,14 @@ agg_tiff <- function(filename = 'Rplot%03d.tiff', width = 480, height = 480,
 #' 
 agg_supertransparent <- function(filename = 'Rplot%03d.png', width = 480, 
                                  height = 480, units = 'px', pointsize = 12, 
-                                 background = 'white', res = 72, alpha_mod = 1) {
+                                 background = 'white', res = 72, alpha_mod = 1, 
+                                 bg) {
   if (deparse(sys.call(), nlines = 1, width.cutoff = 500) == 'dev(filename = filename, width = dim[1], height = dim[2], ...)') {
     units <- 'in'
   }
   file <- validate_path(filename)
   dim <- get_dims(width, height, units, res)
+  background <- if (missing(bg)) background else bg
   .Call("agg_supertransparent_c", file, dim[1], dim[2], as.numeric(pointsize), 
         background, as.numeric(res), as.double(alpha_mod), PACKAGE = 'ragg')
   invisible()
@@ -210,11 +271,12 @@ agg_supertransparent <- function(filename = 'Rplot%03d.png', width = 480,
 #' plot(as.raster(raster))
 #' 
 agg_capture <- function(width = 480, height = 480, units = 'px', pointsize = 12, 
-                        background = 'white', res = 72) {
+                        background = 'white', res = 72, bg) {
   if (deparse(sys.call(), nlines = 1, width.cutoff = 500) == 'dev(filename = filename, width = dim[1], height = dim[2], ...)') {
     units <- 'in'
   }
   dim <- get_dims(width, height, units, res)
+  background <- if (missing(bg)) background else bg
   name <- paste0('agg_capture_', sample(.Machine$integer.max, 1))
   .Call("agg_capture_c", name, dim[1], dim[2], as.numeric(pointsize), 
         background, as.numeric(res), PACKAGE = 'ragg')

@@ -1,3 +1,6 @@
+#ifndef AGGDEV_INCLUDED
+#define AGGDEV_INCLUDED
+
 #include "ragg.h"
 #include "text_renderer.h"
 
@@ -17,8 +20,7 @@
 #include "agg_scanline_p.h"
 #include "agg_scanline_u.h"
 
-#ifndef AGGDEV_INCLUDED
-#define AGGDEV_INCLUDED
+#include "util/agg_color_conv.h"
 
 /* Base class for graphic device interface to AGG. See AggDevice.cpp for 
  * implementation details. 
@@ -65,7 +67,7 @@ public:
   // Lifecycle methods
   AggDevice(const char* fp, int w, int h, double ps, int bg, double res);
   virtual ~AggDevice();
-  void newPage();
+  void newPage(unsigned int bg);
   void close();
   virtual bool savePage();
   SEXP capture();
@@ -157,6 +159,10 @@ AggDevice<PIXFMT, R_COLOR>::AggDevice(const char* fp, int w, int h, double ps,
                                       int bg, double res) : 
   width(w),
   height(h),
+  clip_left(0),
+  clip_right(w),
+  clip_top(0),
+  clip_bottom(h),
   pageno(0),
   file(fp),
   background_int(bg),
@@ -179,18 +185,22 @@ AggDevice<PIXFMT, R_COLOR>::~AggDevice() {
 }
 
 /* newPage() should not need to be overwritten as long the class have an 
- * appropriate savePage() method. For scrren devices it may make sense to change
+ * appropriate savePage() method. For screen devices it may make sense to change
  * it for performance
  */
 template<class PIXFMT, class R_COLOR>
-void AggDevice<PIXFMT, R_COLOR>::newPage() {
+void AggDevice<PIXFMT, R_COLOR>::newPage(unsigned int bg) {
   if (pageno != 0) {
     if (!savePage()) {
       Rf_warning("agg could not write to the given file");
     }
   }
   renderer.reset_clipping(true);
-  renderer.clear(background);
+  if (visibleColour(bg)) {
+    renderer.clear(convertColour(bg));
+  } else {
+    renderer.clear(background);
+  }
   pageno++;
 }
 template<class PIXFMT, class R_COLOR>
@@ -582,6 +592,10 @@ void AggDevice<PIXFMT, R_COLOR>::drawRaster(unsigned int *raster, int w, int h,
   agg::rendering_buffer rbuf(reinterpret_cast<unsigned char*>(raster), w, h, 
                              w * 4);
   
+  unsigned char * buffer8 = new unsigned char[w * h * pixfmt_type_32::pix_width];
+  agg::rendering_buffer rbuf8(buffer8, w, h, w * pixfmt_type_32::pix_width);
+  agg::convert<pixfmt_type_32, pixfmt_r_raster>(&rbuf8, &rbuf);
+
   agg::trans_affine img_mtx;
   img_mtx *= agg::trans_affine_reflection(0);
   img_mtx *= agg::trans_affine_translation(0, h);
@@ -595,9 +609,9 @@ void AggDevice<PIXFMT, R_COLOR>::drawRaster(unsigned int *raster, int w, int h,
   typedef agg::span_interpolator_linear<> interpolator_type;
   interpolator_type interpolator(img_mtx);
   
-  typedef agg::image_accessor_clone<pixfmt_r_raster> img_source_type;
+  typedef agg::image_accessor_clone<pixfmt_type_32> img_source_type;
   
-  pixfmt_r_raster img_pixf(rbuf);
+  pixfmt_type_32 img_pixf(rbuf8);
   img_source_type img_src(img_pixf);
   agg::span_allocator<agg::rgba8> sa;
   agg::rasterizer_scanline_aa<> ras;
@@ -625,6 +639,8 @@ void AggDevice<PIXFMT, R_COLOR>::drawRaster(unsigned int *raster, int w, int h,
     
     agg::render_scanlines_aa(ras, sl, renderer, sa, sg);
   }
+
+  delete [] buffer8;
 }
 
 template<class PIXFMT, class R_COLOR>

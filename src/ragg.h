@@ -35,9 +35,9 @@ typedef agg::pixfmt_rgb48_pre                   pixfmt_type_48;
 typedef agg::pixfmt_rgba64_pre                  pixfmt_type_64;
 
 #ifdef __BIG_ENDIAN__ 
-typedef agg::pixfmt_abgr32                      pixfmt_r_raster;
+typedef agg::pixfmt_abgr32_plain                pixfmt_r_raster;
 #else
-typedef agg::pixfmt_rgba32                      pixfmt_r_raster;
+typedef agg::pixfmt_rgba32_plain                pixfmt_r_raster;
 #endif
 
 // pixfmt agnosting demultiplying
@@ -57,16 +57,18 @@ inline void demultiply<pixfmt_type_64>(pixfmt_type_64* pixfmt) {
 }
 
 SEXP agg_ppm_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, SEXP bg, 
-               SEXP res);
+               SEXP res, SEXP scaling);
 SEXP agg_png_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, SEXP bg, 
-               SEXP res, SEXP bit);
+               SEXP res, SEXP scaling, SEXP bit);
 SEXP agg_supertransparent_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, 
-                            SEXP bg, SEXP res, SEXP alpha_mod);
+                            SEXP bg, SEXP res, SEXP scaling, SEXP alpha_mod);
 SEXP agg_tiff_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, SEXP bg, 
-                SEXP res, SEXP bit, SEXP compression, SEXP encoding);
+                SEXP res, SEXP scaling, SEXP bit, SEXP compression, 
+                SEXP encoding);
 SEXP agg_jpeg_c(SEXP file, SEXP width, SEXP height, SEXP pointsize, SEXP bg, 
-                SEXP res, SEXP quality, SEXP smoothing, SEXP method);
+                SEXP res, SEXP scaling, SEXP quality, SEXP smoothing, 
+                SEXP method);
 SEXP agg_capture_c(SEXP name, SEXP width, SEXP height, SEXP pointsize, SEXP bg, 
-                   SEXP res);
+                   SEXP res, SEXP scaling);
 
 #endif

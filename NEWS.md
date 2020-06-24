@@ -1,3 +1,12 @@
+# ragg 0.3.0
+
+* Fix a bug when plotting partially transparent raster (#44)
+* Add a `scaling` argument to all devices allowing you to change relative 
+  scaling of output.
+* Horizontal and vertical text are now snapped to the pixel grid in order to 
+  improve rendering quality.
+* Internal changes to prepare for coming updates to the graphic engine
+
 # ragg 0.2.0
 
 * Fix compilation on R <= 3.3 by including Rdynload.h explicitly

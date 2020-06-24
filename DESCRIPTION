@@ -1,7 +1,7 @@
 Package: ragg
 Type: Package
 Title: Graphic Devices Based on AGG
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     c(person(given = "Thomas Lin",
              family = "Pedersen",
@@ -43,7 +43,7 @@ Suggests: covr, testthat, grid, graphics
 Imports: systemfonts (>= 0.2.1)
 LinkingTo: systemfonts
 NeedsCompilation: yes
-Packaged: 2020-05-14 09:05:58 UTC; thomas
+Packaged: 2020-06-24 10:06:41 UTC; thomas
 Author: Thomas Lin Pedersen [cre, aut]
     (<https://orcid.org/0000-0002-5147-4711>),
   Maxim Shemanarev [aut, cph] (Author of AGG),
@@ -52,4 +52,4 @@ Author: Thomas Lin Pedersen [cre, aut]
   Spencer Garrett [ctb] (Contributor to AGG),
   RStudio [cph]
 Repository: CRAN
-Date/Publication: 2020-05-14 09:20:03 UTC
+Date/Publication: 2020-06-24 10:20:02 UTC

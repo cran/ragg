@@ -15,8 +15,8 @@ class AggDeviceJpeg : public AggDevice<PIXFMT> {
   int smoothing;
   int method;
 public:
-  AggDeviceJpeg(const char* fp, int w, int h, double ps, int bg, double res, int qual, int smooth, int meth) : 
-  AggDevice<PIXFMT>(fp, w, h, ps, bg, res),
+  AggDeviceJpeg(const char* fp, int w, int h, double ps, int bg, double res, double scaling, int qual, int smooth, int meth) : 
+  AggDevice<PIXFMT>(fp, w, h, ps, bg, res, scaling),
   quality(qual),
   smoothing(smooth),
   method(meth)
@@ -40,8 +40,8 @@ public:
     cinfo.image_width       = this->width;
     cinfo.image_height      = this->height;
     cinfo.density_unit      = 1;
-    cinfo.X_density         = this->res_mod * 72.0;
-    cinfo.Y_density         = this->res_mod * 72.0;
+    cinfo.X_density         = this->res_real;
+    cinfo.Y_density         = this->res_real;
     cinfo.input_components  = 3;
     cinfo.in_color_space    = JCS_RGB;
     cinfo.smoothing_factor  = this->smoothing;

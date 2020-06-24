@@ -59,13 +59,15 @@ public:
   R_COLOR background;
   int background_int;
   double pointsize;
+  double res_real;
   double res_mod;
   double lwd_mod;
   
   TextRenderer t_ren;
   
   // Lifecycle methods
-  AggDevice(const char* fp, int w, int h, double ps, int bg, double res);
+  AggDevice(const char* fp, int w, int h, double ps, int bg, double res, 
+            double scaling);
   virtual ~AggDevice();
   void newPage(unsigned int bg);
   void close();
@@ -156,7 +158,7 @@ private:
  */
 template<class PIXFMT, class R_COLOR>
 AggDevice<PIXFMT, R_COLOR>::AggDevice(const char* fp, int w, int h, double ps, 
-                                      int bg, double res) : 
+                                      int bg, double res, double scaling) : 
   width(w),
   height(h),
   clip_left(0),
@@ -167,8 +169,9 @@ AggDevice<PIXFMT, R_COLOR>::AggDevice(const char* fp, int w, int h, double ps,
   file(fp),
   background_int(bg),
   pointsize(ps),
-  res_mod(res / 72.0),
-  lwd_mod(res / 96.0),
+  res_real(res),
+  res_mod(scaling * res / 72.0),
+  lwd_mod(scaling * res / 96.0),
   t_ren()
 {
   buffer = new unsigned char[width * height * bytes_per_pixel];

@@ -12,8 +12,9 @@ class AggDeviceTiff : public AggDevice<PIXFMT> {
   int compression;
   int encoding;
 public:
-  AggDeviceTiff(const char* fp, int w, int h, double ps, int bg, double res, int comp = 0, int enc = 0) : 
-    AggDevice<PIXFMT>(fp, w, h, ps, bg, res),
+  AggDeviceTiff(const char* fp, int w, int h, double ps, int bg, double res, 
+                double scaling, int comp = 0, int enc = 0) : 
+    AggDevice<PIXFMT>(fp, w, h, ps, bg, res, scaling),
     compression(comp),
     encoding(enc)
   {
@@ -36,8 +37,8 @@ public:
     }
     TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, 8);
     TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-    TIFFSetField(out, TIFFTAG_XRESOLUTION, this->res_mod * 72.0);
-    TIFFSetField(out, TIFFTAG_YRESOLUTION, this->res_mod * 72.0);
+    TIFFSetField(out, TIFFTAG_XRESOLUTION, this->res_real);
+    TIFFSetField(out, TIFFTAG_YRESOLUTION, this->res_real);
     TIFFSetField(out, TIFFTAG_RESOLUTIONUNIT, 2); // Inches
     
     // Compression
@@ -81,8 +82,9 @@ class AggDeviceTiff16 : public AggDevice16<PIXFMT> {
   int compression;
   int encoding;
 public:
-  AggDeviceTiff16(const char* fp, int w, int h, double ps, int bg, double res, int comp = 0, int enc = 0) : 
-    AggDevice16<PIXFMT>(fp, w, h, ps, bg, res),
+  AggDeviceTiff16(const char* fp, int w, int h, double ps, int bg, double res, 
+                  double scaling, int comp = 0, int enc = 0) : 
+    AggDevice16<PIXFMT>(fp, w, h, ps, bg, res, scaling),
     compression(comp),
     encoding(enc)
   {
@@ -105,8 +107,8 @@ public:
     }
     TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, 16);
     TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-    TIFFSetField(out, TIFFTAG_XRESOLUTION, this->res_mod * 72.0);
-    TIFFSetField(out, TIFFTAG_YRESOLUTION, this->res_mod * 72.0);
+    TIFFSetField(out, TIFFTAG_XRESOLUTION, this->res_real);
+    TIFFSetField(out, TIFFTAG_YRESOLUTION, this->res_real);
     TIFFSetField(out, TIFFTAG_RESOLUTIONUNIT, 2); // Inches
     
     // Compression

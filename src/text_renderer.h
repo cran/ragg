@@ -185,6 +185,9 @@ public:
     const uint32_t* string_conv = converter.convert(string, size_out);
     double width = text_width(string_conv, size_out);
     
+    // Snap to pixel grid for vertical or horizontal text
+    bool snap = fmod(rot, 90) < 1e-6;
+    
     if (rot != 0) {
       rot = agg::deg2rad(-rot);
       agg::trans_affine mtx;
@@ -194,6 +197,11 @@ public:
     
     x -= (width * hadj) * cos(rot);
     y -= (width * hadj) * sin(rot);
+    
+    if (snap) {
+      x = std::round(x);
+      y = std::round(y);
+    }
     
     while (*string_conv) {
       const agg::glyph_cache* glyph = get_manager().glyph(*string_conv);
@@ -239,19 +247,10 @@ private:
   }
   
   double text_width(const uint32_t* string, int size) {
-    double x = 0, y = 0, first_bearing = 0, last_bearing = 0;
-    bool first = true;
+    double x = 0, y = 0;
     while (*string) {
       const agg::glyph_cache* glyph = get_manager().glyph(*string);
       if (glyph) {
-        if (first) {
-          first_bearing = glyph->bounds.x1;
-          // On windows space will be given a left bearing of MAX_INT for god 
-          // knows what reason
-          if (first_bearing > glyph->advance_x) first_bearing = 0;
-          first = false;
-        }
-        last_bearing = glyph->advance_x - glyph->bounds.x2;
         get_manager().add_kerning(&x, &y);
         // increment pen position
         x += glyph->advance_x;
@@ -259,7 +258,7 @@ private:
       }
       string++;
     }
-    return x - first_bearing - last_bearing;
+    return x;
   }
   
   static std::pair<std::string, int> get_font_file(const char* family, int bold, 

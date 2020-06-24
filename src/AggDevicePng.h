@@ -12,8 +12,8 @@ extern "C" {
 template<class PIXFMT>
 class AggDevicePng : public AggDevice<PIXFMT> {
 public:
-  AggDevicePng(const char* fp, int w, int h, double ps, int bg, double res) : 
-    AggDevice<PIXFMT>(fp, w, h, ps, bg, res)
+  AggDevicePng(const char* fp, int w, int h, double ps, int bg, double res, double scaling) : 
+    AggDevice<PIXFMT>(fp, w, h, ps, bg, res, scaling)
   {
     
   }
@@ -47,7 +47,7 @@ public:
     );
     
     // Write in physical dimensions
-    unsigned int ppm = this->res_mod * 72.0 / 0.0254;
+    unsigned int ppm = this->res_real / 0.0254;
     png_set_pHYs(png, info, ppm, ppm, 1);
     
     // Write prefered background, just because...
@@ -81,8 +81,8 @@ typedef AggDevicePng<pixfmt_type_32> AggDevicePngAlpha;
 template<class PIXFMT>
 class AggDevicePng16 : public AggDevice16<PIXFMT> {
 public:
-  AggDevicePng16(const char* fp, int w, int h, double ps, int bg, double res, double alpha_mod = 1.0) : 
-  AggDevice16<PIXFMT>(fp, w, h, ps, bg, res, alpha_mod)
+  AggDevicePng16(const char* fp, int w, int h, double ps, int bg, double res, double scaling, double alpha_mod = 1.0) : 
+  AggDevice16<PIXFMT>(fp, w, h, ps, bg, res, scaling, alpha_mod)
   {
     
   }
@@ -116,7 +116,7 @@ public:
     );
     
     // Write in physical dimensions
-    unsigned int ppm = this->res_mod * 72.0 / 0.0254;
+    unsigned int ppm = this->res_real / 0.0254;
     png_set_pHYs(png, info, ppm, ppm, 1);
     
     // Write prefered background, just because...

@@ -1,8 +1,8 @@
-4112f5285cfb648cc30a71a64d4a03ba *DESCRIPTION
+e8f017861547aa92ecce1617d87917ce *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 c4d2281fabe13eaef0a344d82129875c *LICENSE.note
 e2d77d115d80e110b81d47877869b8cd *NAMESPACE
-aa9fa4b4b9e1cf71afb8482c808493fc *NEWS.md
+3a5b66245e42400d99e4fe6c937b1b4d *NEWS.md
 46d20c7af22a8425faeb37b4dc9dae43 *R/aaa.R
 011e2d2f24d587a0d4ff64737ada17f0 *R/agg_dev.R
 eadd0fa18b988efdacccb4e335c9c979 *R/ragg-package.R
@@ -167,7 +167,7 @@ b3a8cf1bd081d8f124035f06f1c18e23 *src/agg/src/agg_vcgen_dash.cpp
 5c40f602740a6579e2a5594533da2805 *src/agg/src/agg_vcgen_stroke.cpp
 01196f1c3ee9dd743d2cba16cbb3bc32 *src/capture_dev.cpp
 6d4350aef0ef3c6dd16c7572f38843b6 *src/init.cpp
-19f4d895d60db7461de79e2d67a20518 *src/init_device.h
+d2654527f4b1f25979d67179df534796 *src/init_device.h
 dfd5f3a96a12dcb5dfc781f048990d3b *src/jpeg_dev.cpp
 1b57c27c928422d2cde2e4734326c351 *src/png_dev.cpp
 2238589322f92812333ed73f9ee85989 *src/ppm_dev.cpp

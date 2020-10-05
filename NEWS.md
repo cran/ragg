@@ -1,3 +1,11 @@
+# ragg 0.4.0
+
+* Move text shaping to the new textshaping package.
+* Fix `agg_capture()` on big endian systems (#49, @QuLogic)
+* Fix use of symbol font on Windows by moving to Segoe UI Symbol which has a 
+  Unicode charmap (#51)
+* Better compatibility with knitr and `ggplot2::ggsave()`
+
 # ragg 0.3.1
 
 * Roll back support for new clipping options in the graphic engine as it was 

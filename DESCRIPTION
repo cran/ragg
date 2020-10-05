@@ -1,7 +1,7 @@
 Package: ragg
 Type: Package
 Title: Graphic Devices Based on AGG
-Version: 0.3.1
+Version: 0.4.0
 Authors@R: 
     c(person(given = "Thomas Lin",
              family = "Pedersen",
@@ -37,13 +37,13 @@ License: MIT + file LICENSE
 URL: https://ragg.r-lib.org, https://github.com/r-lib/ragg
 BugReports: https://github.com/r-lib/ragg/issues
 Encoding: UTF-8
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 SystemRequirements: C++11, freetype2, libpng, libtiff, libjpeg
 Suggests: covr, testthat, grid, graphics
-Imports: systemfonts (>= 0.2.1)
-LinkingTo: systemfonts
+Imports: systemfonts (>= 0.2.1), textshaping
+LinkingTo: systemfonts, textshaping
 NeedsCompilation: yes
-Packaged: 2020-07-03 09:45:37 UTC; thomas
+Packaged: 2020-10-05 08:24:26 UTC; thomas
 Author: Thomas Lin Pedersen [cre, aut]
     (<https://orcid.org/0000-0002-5147-4711>),
   Maxim Shemanarev [aut, cph] (Author of AGG),
@@ -52,4 +52,4 @@ Author: Thomas Lin Pedersen [cre, aut]
   Spencer Garrett [ctb] (Contributor to AGG),
   RStudio [cph]
 Repository: CRAN
-Date/Publication: 2020-07-03 10:10:03 UTC
+Date/Publication: 2020-10-05 10:00:03 UTC

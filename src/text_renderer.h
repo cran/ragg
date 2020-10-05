@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstdint>
 #include <systemfonts.h>
+#include <textshaping.h>
+
 
 #include "ragg.h"
 
@@ -121,14 +123,16 @@ public:
 
 class TextRenderer {
   UTF_UCS converter;
-  std::pair<std::string, int> last_font;
+  FontSettings last_font;
   agg::glyph_rendering last_gren;
+  std::vector<double> x_buffer;
+  std::vector<double> y_buffer;
+  std::vector<int> id_buffer;
   
 public:
   TextRenderer() :
     converter()
   {
-    last_font = std::make_pair("", -1);
     last_gren = agg::glyph_ren_native_mono;
     get_engine().hinting(true);
     get_engine().flip_y(true);
@@ -137,34 +141,45 @@ public:
   
   bool load_font(agg::glyph_rendering gren, const char *family, int face, 
                  double size) {
-    std::pair<std::string, int> font = get_font_file(family, 
-                                                     face == 2 || face == 4, 
-                                                     face == 3 || face == 4,
-                                                     face == 5);
+    FontSettings font = get_font_file(family, 
+                                      face == 2 || face == 4, 
+                                      face == 3 || face == 4,
+                                      face == 5);
     if (!(gren == last_gren && 
-        font.second == last_font.second && 
-        font.first == last_font.first)) {
-      if (!get_engine().load_font(font.first.c_str(), font.second, gren)) {
+        font.index == last_font.index &&
+        strncmp(font.file, last_font.file, PATH_MAX) == 0)) {
+      if (!get_engine().load_font(font.file, font.index, gren)) {
         Rf_warning("Unable to load font: %s", family);
         return false;
       }
-      last_font = font;
       last_gren = gren;
       get_engine().height(size);
     } else if (size != get_engine().height()) {
       get_engine().height(size);
     }
+    last_font = font;
     return true;
   }
   
   double get_text_width(const char* string) {
-    int size_out = 0;
-    const uint32_t* string_conv = converter.convert(string, size_out);
-    return text_width(string_conv, size_out);
+    double width = 0.0;
+    int error = ts_string_width(
+      string, 
+      last_font, 
+      get_engine().height(), 
+      72.0, 
+      1, 
+      &width
+    );
+    if (error) {
+      return 0.0;
+    }
+    return width;
   }
   
   void get_char_metric(int c, double *ascent, double *descent, double *width) {
-    const agg::glyph_cache* glyph = get_manager().glyph(c);
+    unsigned index = get_engine().get_glyph_index(c);
+    const agg::glyph_cache* glyph = get_manager().glyph(index);
     if (glyph) {
       *ascent = (double) -glyph->bounds.y1;
       *descent = (double) glyph->bounds.y2;
@@ -181,12 +196,34 @@ public:
     agg::conv_curve<font_manager_type::path_adaptor_type> curves(get_manager().path_adaptor());
     curves.approximation_scale(2.0);
     
-    int size_out = 0;
-    const uint32_t* string_conv = converter.convert(string, size_out);
-    double width = text_width(string_conv, size_out);
+    double width = get_text_width(string);
     
-    // Snap to pixel grid for vertical or horizontal text
-    bool snap = fmod(rot, 90) < 1e-6;
+    if (width == 0.0) {
+      return;
+    }
+    
+    int expected_max = strlen(string) * 16;
+    x_buffer.reserve(expected_max);
+    y_buffer.reserve(expected_max);
+    id_buffer.reserve(expected_max);
+    
+    int n_glyphs = 0;
+    ts_string_shape(
+      string, 
+      last_font,
+      get_engine().height(),
+      72.0,
+      x_buffer.data(),
+      y_buffer.data(),
+      id_buffer.data(),
+      NULL,
+      &n_glyphs,
+      expected_max
+    );
+    
+    if (n_glyphs == 0) {
+      return;
+    }
     
     if (rot != 0) {
       rot = agg::deg2rad(-rot);
@@ -195,19 +232,25 @@ public:
       get_engine().transform(mtx);
     }
     
-    x -= (width * hadj) * cos(rot);
-    y -= (width * hadj) * sin(rot);
+    double cos_rot = cos(rot);
+    double sin_rot = sin(rot);
     
-    if (snap) {
-      x = std::round(x);
+    x -= (width * hadj) * cos_rot;
+    y -= (width * hadj) * sin_rot;
+    
+    // Snap to pixel grid for vertical or horizontal text
+    if (fmod(rot, 180) < 1e-6) {
       y = std::round(y);
+    } else if (fmod(rot + 90, 180) < 1e-6) {
+      x = std::round(x);
     }
     
-    while (*string_conv) {
-      const agg::glyph_cache* glyph = get_manager().glyph(*string_conv);
+    for (int i = 0; i < n_glyphs; ++i) {
+      const agg::glyph_cache* glyph = get_manager().glyph(id_buffer[i]);
       if (glyph) {
-        get_manager().add_kerning(&x, &y);
-        get_manager().init_embedded_adaptors(glyph, x, y);
+        double x_offset = x_buffer[i] * cos_rot + y_buffer[i] * sin_rot;
+        double y_offset = y_buffer[i] * cos_rot + x_buffer[i] * sin_rot;
+        get_manager().init_embedded_adaptors(glyph, x + x_offset, y + y_offset);
         switch(glyph->data_type) {
         default: break;
         case agg::glyph_data_gray8:
@@ -222,12 +265,7 @@ public:
           agg::render_scanlines(ras, sl, ren_solid);
           break;
         }
-        
-        // increment pen position
-        x += glyph->advance_x;
-        y += glyph->advance_y;
       }
-      string_conv++;
     }
     
     if (rot != 0) {
@@ -261,19 +299,17 @@ private:
     return x;
   }
   
-  static std::pair<std::string, int> get_font_file(const char* family, int bold, 
-                                                   int italic, int symbol) {
+  FontSettings get_font_file(const char* family, int bold, int italic, 
+                             int symbol) {
     const char* fontfamily = family;
     if (symbol) {
+#if defined _WIN32
+      fontfamily = "Segoe UI Symbol";
+#else
       fontfamily = "Symbol";
+#endif
     }
-    char *path = new char[PATH_MAX+1];
-    path[PATH_MAX] = '\0';
-    int index = locate_font(fontfamily, italic, bold, path, PATH_MAX);
-    std::pair<std::string, int> res {path, index};
-    delete[] path;
-    
-    return res;
+    return locate_font_with_features(fontfamily, italic, bold);
   }
 };
 

@@ -1,8 +1,8 @@
-561652b329776b20601e11a923defedf *DESCRIPTION
+2ad785e5c96cb4f89800156d8cf59751 *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 c4d2281fabe13eaef0a344d82129875c *LICENSE.note
 d91c0a35bd0bcd46229075e0fa1b5631 *NAMESPACE
-9ef078ee7682f16832dadd6fdc8dbb63 *NEWS.md
+d441ea2be7a181c614a99d69b89c8fa8 *NEWS.md
 46d20c7af22a8425faeb37b4dc9dae43 *R/aaa.R
 e8e6801c496744ec712fe834a771ecee *R/agg_dev.R
 6ad67b21797a8729bbe3fd705012d19e *R/ragg-package.R
@@ -172,7 +172,7 @@ dfd5f3a96a12dcb5dfc781f048990d3b *src/jpeg_dev.cpp
 1b57c27c928422d2cde2e4734326c351 *src/png_dev.cpp
 2238589322f92812333ed73f9ee85989 *src/ppm_dev.cpp
 09037f770686f58dba1396ec6c01ce98 *src/ragg.h
-f6286a207235d22007c61c7085fd697f *src/text_renderer.h
+6f4cfeceb3c0d04babe5ab5b77947f0c *src/text_renderer.h
 19db5ebbc56a214bed8ab685c8da3ec6 *src/tiff_dev.cpp
 969206a560d843a732e9256f8f2f6035 *tests/testthat.R
 02b51137d6159f9210b05bb08075c1ad *tests/testthat/test-circle.R
@@ -185,6 +185,6 @@ c0fc5a8070541eb777669824aaf826fe *tests/testthat/test-polyline.R
 57e8aa9081a528be3657c023318806db *tests/testthat/test-ppm.R
 ac61c2268cf318ea035e01cae19c05dd *tests/testthat/test-raster.R
 05c436c0113022f9394e413ca41657ae *tests/testthat/test-rect.R
-590d0038032c29c419623b49f6b2f6b6 *tests/testthat/test-text.R
+087507237482a9d05d5a2431384803a4 *tests/testthat/test-text.R
 e1e28ee35d89426433934cfb05cc7a7c *tests/testthat/test-tiff.R
 f1af3ce79f07dbfeb89d9af9212c57af *tools/winlibs.R

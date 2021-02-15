@@ -18,3 +18,19 @@ validate_path <- function(path) {
   dir <- normalizePath(dir)
   file.path(dir, basename(path))
 }
+
+#' @importFrom systemfonts register_font
+#' @export
+systemfonts::register_font
+
+#' @importFrom systemfonts register_variant
+#' @export
+systemfonts::register_variant
+
+#' @importFrom systemfonts font_feature
+#' @export
+systemfonts::font_feature
+
+#' @importFrom textshaping get_font_features
+#' @export
+textshaping::get_font_features

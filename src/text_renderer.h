@@ -10,6 +10,13 @@
 #include "ragg.h"
 
 #include "agg_font_freetype.h"
+#include "agg_span_interpolator_linear.h"
+#include "agg_image_accessors.h"
+#include "agg_span_image_filter_rgba.h"
+#include "agg_span_allocator.h"
+#include "agg_path_storage.h"
+
+#include "util/agg_color_conv.h"
 
 typedef agg::font_engine_freetype_int32 font_engine_type;
 typedef agg::font_cache_manager<font_engine_type> font_manager_type;
@@ -121,13 +128,20 @@ public:
   }
 };
 
+template<typename PIXFMT>
 class TextRenderer {
   UTF_UCS converter;
   FontSettings last_font;
   agg::glyph_rendering last_gren;
-  std::vector<double> x_buffer;
-  std::vector<double> y_buffer;
-  std::vector<int> id_buffer;
+  std::vector<textshaping::Point> loc_buffer;
+  std::vector<uint32_t> id_buffer;
+  std::vector<int> cluster_buffer;
+  std::vector<unsigned int> font_buffer;
+  std::vector<FontSettings> fallback_buffer;
+  std::vector<double> scaling_buffer;
+  double current_font_height;
+  double current_font_size;
+  bool no_bearings;
   
 public:
   TextRenderer() :
@@ -136,7 +150,7 @@ public:
     last_gren = agg::glyph_ren_native_mono;
     get_engine().hinting(true);
     get_engine().flip_y(true);
-    get_engine().gamma(agg::gamma_power(1.8));
+    get_engine().gamma(agg::gamma_power(1.6));
   }
   
   bool load_font(agg::glyph_rendering gren, const char *family, int face, 
@@ -145,30 +159,31 @@ public:
                                       face == 2 || face == 4, 
                                       face == 3 || face == 4,
                                       face == 5);
-    if (!(gren == last_gren && 
-        font.index == last_font.index &&
-        strncmp(font.file, last_font.file, PATH_MAX) == 0)) {
-      if (!get_engine().load_font(font.file, font.index, gren)) {
-        Rf_warning("Unable to load font: %s", family);
-        return false;
-      }
-      last_gren = gren;
-      get_engine().height(size);
-    } else if (size != get_engine().height()) {
-      get_engine().height(size);
+    current_font_size = size;
+    if (!load_font_from_file(font, gren, size)) {
+      Rf_warning("Unable to load font: %s", family);
+      current_font_height = 0;
+      return false;
     }
-    last_font = font;
+    current_font_height = size;
+    no_bearings = false;
+#if defined(_WIN32)
+    // Windows emojis have weird right bearings
+    if (strcmp("Segoe UI Emoji", get_engine().family()) == 0) {
+      no_bearings = true;
+    }
+#endif
     return true;
   }
   
   double get_text_width(const char* string) {
     double width = 0.0;
-    int error = ts_string_width(
+    int error = textshaping::string_width(
       string, 
       last_font, 
-      get_engine().height(), 
+      current_font_size, 
       72.0, 
-      1, 
+      no_bearings ? 0 : 1, 
       &width
     );
     if (error) {
@@ -180,17 +195,44 @@ public:
   void get_char_metric(int c, double *ascent, double *descent, double *width) {
     unsigned index = get_engine().get_glyph_index(c);
     const agg::glyph_cache* glyph = get_manager().glyph(index);
-    if (glyph) {
+    if (glyph->data_type == agg::glyph_data_color) {
+      double mod = current_font_height / get_engine().height();
+      if (c != 77 && glyph) {
+        *ascent = mod * (double) -glyph->bounds.y1;
+        *descent = mod * (double) glyph->bounds.y2;
+        
+        *width = mod * glyph->advance_x;
+      } else {
+        *ascent = mod * get_engine().ascent();
+        *descent = mod * get_engine().descent();
+        
+        *width = mod * get_engine().max_advance();
+      }
+      
+#if defined(__APPLE__)
+      // Apple emojis have no descender
+      double y_shift = double(glyph->bounds.y1 - glyph->bounds.y2) * 0.1;
+      *descent += y_shift;
+      *ascent += y_shift;
+#endif
+      
+    } else if (glyph && !(c == 77 && index == 0)) { // Only use 77 glyph if found
       *ascent = (double) -glyph->bounds.y1;
       *descent = (double) glyph->bounds.y2;
       
       *width = glyph->advance_x;
+    } else {
+      // Use global font metrics
+      *ascent = get_engine().ascent();
+      *descent = get_engine().descent();
+      
+      *width = get_engine().max_advance();
     }
   }
   
-  template<typename renderer_solid>
+  template<typename renderer_solid, typename renderer>
   void plot_text(double x, double y, const char *string, double rot, double hadj, 
-                 renderer_solid &ren_solid) {
+                 renderer_solid &ren_solid, renderer &ren) {
     agg::scanline_u8 sl;
     agg::rasterizer_scanline_aa<> ras;
     agg::conv_curve<font_manager_type::path_adaptor_type> curves(get_manager().path_adaptor());
@@ -203,23 +245,32 @@ public:
     }
     
     int expected_max = strlen(string) * 16;
-    x_buffer.resize(expected_max);
-    y_buffer.resize(expected_max);
-    id_buffer.resize(expected_max);
+    loc_buffer.reserve(expected_max);
+    id_buffer.reserve(expected_max);
+    cluster_buffer.reserve(expected_max);
+    font_buffer.reserve(expected_max);
+    fallback_buffer.reserve(expected_max);
+    scaling_buffer.reserve(expected_max);
     
-    int n_glyphs = 0;
-    ts_string_shape(
-      string, 
+    int err = textshaping::string_shape(
+      string,
       last_font,
-      get_engine().height(),
+      current_font_size, 
       72.0,
-      x_buffer.data(),
-      y_buffer.data(),
-      id_buffer.data(),
-      NULL,
-      &n_glyphs,
-      expected_max
+      loc_buffer,
+      id_buffer,
+      cluster_buffer,
+      font_buffer,
+      fallback_buffer,
+      scaling_buffer
     );
+    
+    if (err != 0) {
+      Rf_warning("textshaping failed to shape the string");
+      return;
+    }
+    
+    int n_glyphs = loc_buffer.size();
     
     if (n_glyphs == 0) {
       return;
@@ -244,27 +295,39 @@ public:
     } else if (fmod(rot + 90, 180) < 1e-6) {
       x = std::round(x);
     }
-    
-    for (int i = 0; i < n_glyphs; ++i) {
-      const agg::glyph_cache* glyph = get_manager().glyph(id_buffer[i]);
-      if (glyph) {
-        double x_offset = x_buffer[i] * cos_rot + y_buffer[i] * sin_rot;
-        double y_offset = y_buffer[i] * cos_rot + x_buffer[i] * sin_rot;
-        get_manager().init_embedded_adaptors(glyph, x + x_offset, y + y_offset);
-        switch(glyph->data_type) {
-        default: break;
-        case agg::glyph_data_gray8:
-          agg::render_scanlines(get_manager().gray8_adaptor(), 
-                                get_manager().gray8_scanline(), 
-                                ren_solid);
-          break;
-          
-        case agg::glyph_data_outline:
-          ras.reset();
-          ras.add_path(curves);
-          agg::render_scanlines(ras, sl, ren_solid);
-          break;
+    int text_run_start = 0;
+    for (int j = 1; j <= n_glyphs; ++j) {
+      if (j == n_glyphs || font_buffer[j] != font_buffer[j - 1]) {
+        if (fallback_buffer.size() == 0 || // To guard against old textshaping version/solaris mock
+            load_font_from_file(fallback_buffer[font_buffer[text_run_start]], last_gren, current_font_size)) {
+          for (int i = text_run_start; i < j; ++i) {
+            const agg::glyph_cache* glyph = get_manager().glyph(id_buffer[i]);
+            if (glyph) {
+              double x_offset = loc_buffer[i].x * cos_rot + loc_buffer[i].y * sin_rot;
+              double y_offset = loc_buffer[i].y * cos_rot + loc_buffer[i].x * sin_rot;
+              get_manager().init_embedded_adaptors(glyph, x + x_offset, y + y_offset);
+              switch(glyph->data_type) {
+              default: break;
+              case agg::glyph_data_gray8:
+                agg::render_scanlines(get_manager().gray8_adaptor(), 
+                                      get_manager().gray8_scanline(), 
+                                      ren_solid);
+                break;
+                
+              case agg::glyph_data_color:
+                renderColourGlyph(glyph, x + x_offset, y + y_offset, rot, ren, scaling_buffer[font_buffer[text_run_start]]);
+                break;
+                
+              case agg::glyph_data_outline:
+                ras.reset();
+                ras.add_path(curves);
+                agg::render_scanlines(ras, sl, ren_solid);
+                break;
+              }
+            }
+          }
         }
+        text_run_start = j;
       }
     }
     
@@ -284,21 +347,6 @@ private:
     return manager;
   }
   
-  double text_width(const uint32_t* string, int size) {
-    double x = 0, y = 0;
-    while (*string) {
-      const agg::glyph_cache* glyph = get_manager().glyph(*string);
-      if (glyph) {
-        get_manager().add_kerning(&x, &y);
-        // increment pen position
-        x += glyph->advance_x;
-        y += glyph->advance_y;
-      }
-      string++;
-    }
-    return x;
-  }
-  
   FontSettings get_font_file(const char* family, int bold, int italic, 
                              int symbol) {
     const char* fontfamily = family;
@@ -310,6 +358,90 @@ private:
 #endif
     }
     return locate_font_with_features(fontfamily, italic, bold);
+  }
+  
+  bool load_font_from_file(FontSettings font, agg::glyph_rendering gren, double size) {
+    if (!(gren == last_gren && 
+        font.index == last_font.index &&
+        strncmp(font.file, last_font.file, PATH_MAX) == 0)) {
+      if (!get_engine().load_font(font.file, font.index, gren)) {
+        return false;
+      }
+      last_gren = gren;
+      get_engine().height(size);
+    } else if (size != get_engine().height()) {
+      get_engine().height(size);
+    }
+    last_font = font;
+    return true;
+  } 
+  
+  template<typename ren>
+  void renderColourGlyph(const agg::glyph_cache* glyph, double x, double y, double rot, ren &renderer, double scaling) {
+    int w = glyph->bounds.x2 - glyph->bounds.x1;
+    int h = glyph->bounds.y1 - glyph->bounds.y2;
+    agg::rendering_buffer rbuf(glyph->data, w, h, w * 4);
+    
+    unsigned char * buffer = new unsigned char[w * h * PIXFMT::pix_width];
+    agg::rendering_buffer rbuf_conv(buffer, w, h, w * PIXFMT::pix_width);
+    agg::convert<PIXFMT, pixfmt_col_glyph>(&rbuf_conv, &rbuf);
+    
+    agg::trans_affine img_mtx;
+    img_mtx *= agg::trans_affine_translation(0, -glyph->bounds.y1);
+    if (scaling > 0) {
+      img_mtx *= agg::trans_affine_translation(-double(w)/2, 0);
+      img_mtx *= agg::trans_affine_scaling(scaling);
+      img_mtx *= agg::trans_affine_translation(scaling * double(w)/2, 0);
+    }
+#if defined(__APPLE__)
+    // Apple emojis have no descender
+    if (strcmp("Apple Color Emoji", get_engine().family()) == 0) {
+      if (scaling < 0) scaling = 1.0; //shouldn't happen as Apple emojis are not scalable
+      img_mtx *= agg::trans_affine_translation(0, scaling * double(h) * 0.12);
+    }
+#endif
+    img_mtx *= agg::trans_affine_rotation(rot);
+    img_mtx *= agg::trans_affine_translation(x, y);
+    agg::trans_affine src_mtx = img_mtx;
+    img_mtx.invert();
+    
+    typedef agg::span_interpolator_linear<> interpolator_type;
+    interpolator_type interpolator(img_mtx);
+    
+    typedef agg::image_accessor_clone<PIXFMT> img_source_type;
+    
+    PIXFMT img_pixf(rbuf_conv);
+    img_source_type img_src(img_pixf);
+    agg::span_allocator<typename PIXFMT::blender_type::color_type> sa;
+    agg::rasterizer_scanline_aa<> ras;
+    agg::scanline_u8 sl;
+    
+    agg::path_storage rect;
+    rect.remove_all();
+    rect.move_to(0, 0);
+    rect.line_to(0, h);
+    rect.line_to(w, h);
+    rect.line_to(w, 0);
+    rect.close_polygon();
+    agg::conv_transform<agg::path_storage> tr(rect, src_mtx);
+    ras.add_path(tr);
+    
+    if (scaling >= 1 || scaling < 0) {
+      typedef agg::span_image_filter_rgba_bilinear<img_source_type, interpolator_type> span_gen_type;
+      span_gen_type sg(img_src, interpolator);
+      agg::render_scanlines_aa(ras, sl, renderer, sa, sg);
+    } else {
+      agg::image_filter_bilinear filter_kernel;
+      agg::image_filter_lut filter(filter_kernel, true);
+      
+      typedef agg::span_image_resample_rgba_affine<img_source_type> span_gen_type;
+      
+      span_gen_type sg(img_src, interpolator, filter);
+      sg.blur(1);
+      agg::render_scanlines_aa(ras, sl, renderer, sa, sg);
+    }
+    
+    delete [] buffer;
   }
 };
 

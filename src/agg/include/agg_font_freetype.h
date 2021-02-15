@@ -77,6 +77,7 @@ namespace agg
         int         last_error()   const { return m_last_error; }
         unsigned    resolution()   const { return m_resolution; }
         const char* name()         const { return m_name;       }
+        const char* family()       const { return m_cur_face->family_name; }
         unsigned    num_faces()    const;
         FT_Encoding char_map()     const { return m_char_map;   }
         double      height()       const { return double(m_height) / 64.0;    }
@@ -98,6 +99,9 @@ namespace agg
         unsigned        data_size()   const { return m_data_size;   }
         glyph_data_type data_type()   const { return m_data_type;   }
         const rect_i&   bounds()      const { return m_bounds;      }
+        double          ascent()      const { return double(m_cur_face->size->metrics.ascender) / 64;}
+        double          descent()     const { return double(m_cur_face->size->metrics.descender) / 64;}
+        double          max_advance() const { return double(m_cur_face->size->metrics.max_advance) / 64;}
         double          advance_x()   const { return m_advance_x;   }
         double          advance_y()   const { return m_advance_y;   }
         void            write_glyph_to(int8u* data) const;

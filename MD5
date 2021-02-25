@@ -1,8 +1,8 @@
-595bdaf61d81af3abf920acb8f61c221 *DESCRIPTION
+2e0e081ef0b97948b0c9f9e46fe91351 *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 c4d2281fabe13eaef0a344d82129875c *LICENSE.note
 a8964cbb59e44b15f9f801f95fca4957 *NAMESPACE
-6544b38420b60e1742c1aa32e26414fc *NEWS.md
+13af7cd4df8853a1a4161ff5ce726b7a *NEWS.md
 68a38fce0eb8b7ba323cc6f02f20ca24 *R/aaa.R
 0911b259ade882d077a21ebce8f67dbe *R/agg_dev.R
 6ad67b21797a8729bbe3fd705012d19e *R/ragg-package.R
@@ -21,7 +21,7 @@ a6f7526f0226e7c3d3d785b41bb529b2 *man/figures/README-unnamed-chunk-4-1.png
 5d857726ace7419381164b5e1d7e55f6 *man/figures/logo.png
 40c6296e015379ff762af986a3ece91a *man/ragg-package.Rd
 dee794901f050af1cb9cfb9d28d14032 *man/reexports.Rd
-01adb07dc12333719d15698364f69cb8 *src/AggDevice.h
+33dba31662e11fc5ce0d3bc42b5fe9df *src/AggDevice.h
 49744f75b97096c7d4113b5a76c40a4e *src/AggDevice16.h
 96ecc06b298af3b5dee10a06b0f72214 *src/AggDeviceCapture.h
 fdd39b49bce4f36ff77a846f29d5ed46 *src/AggDeviceJpeg.h
@@ -72,7 +72,7 @@ c1d6b3cb9671e779d34fb0fcd4c0bc31 *src/agg/include/agg_conv_segmentator.h
 8a96a7cd1b084cd7c3ecfe00836d8b03 *src/agg/include/agg_embedded_raster_fonts.h
 af804192dde2030a71fade7e88f009ff *src/agg/include/agg_font_cache_manager.h
 f585358394ae85201694c7a09c0b46f7 *src/agg/include/agg_font_cache_manager2.h
-3203a37a5d5e480f0093dbc8ad9dcafb *src/agg/include/agg_font_freetype.h
+1fabca637a8c25b2eea4b6f36e7657db *src/agg/include/agg_font_freetype.h
 3e11e70afa5ae2ca43982d8d3381e24d *src/agg/include/agg_gamma_functions.h
 79df8d496dd1a0f08768355d1066d4f1 *src/agg/include/agg_gamma_lut.h
 aa5f3ff6eb5d4bf1d39fb452d9d6b31f *src/agg/include/agg_glyph_raster_bin.h
@@ -169,12 +169,12 @@ b3a8cf1bd081d8f124035f06f1c18e23 *src/agg/src/agg_vcgen_dash.cpp
 5c40f602740a6579e2a5594533da2805 *src/agg/src/agg_vcgen_stroke.cpp
 01196f1c3ee9dd743d2cba16cbb3bc32 *src/capture_dev.cpp
 6d4350aef0ef3c6dd16c7572f38843b6 *src/init.cpp
-61baf660cfcfb1ba7d194c0e63f54c02 *src/init_device.h
+2a7f533e52a7dc74d60e3a022529f675 *src/init_device.h
 dfd5f3a96a12dcb5dfc781f048990d3b *src/jpeg_dev.cpp
 1b57c27c928422d2cde2e4734326c351 *src/png_dev.cpp
 2238589322f92812333ed73f9ee85989 *src/ppm_dev.cpp
 5aaa43c35fa7af7a0dba71f0dd966aac *src/ragg.h
-ea2bf6d47e97226c0f47fa550f2ca66c *src/text_renderer.h
+570391e2ca36a6d9a753739999675031 *src/text_renderer.h
 19db5ebbc56a214bed8ab685c8da3ec6 *src/tiff_dev.cpp
 969206a560d843a732e9256f8f2f6035 *tests/testthat.R
 02b51137d6159f9210b05bb08075c1ad *tests/testthat/test-circle.R

@@ -1,3 +1,8 @@
+# ragg 1.1.2
+
+* Fix bug in `agg_capture()` that resulted in premultiplied colour values being
+  returned
+
 # ragg 1.1.1
 
 * Fix a bug in glyph dimension lookup that could cause system crashes

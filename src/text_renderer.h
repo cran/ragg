@@ -1,5 +1,4 @@
-#ifndef TEXTREN_INCLUDED
-#define TEXTREN_INCLUDED
+#pragma once
 
 #include <vector>
 #include <cstdint>
@@ -8,6 +7,7 @@
 
 
 #include "ragg.h"
+#include "rendering.h"
 
 #include "agg_font_freetype.h"
 #include "agg_span_interpolator_linear.h"
@@ -224,10 +224,10 @@ public:
     }
   }
   
-  template<typename renderer_solid, typename renderer>
+  template<typename TARGET, typename renderer_solid, typename renderer, typename raster, typename scanline>
   void plot_text(double x, double y, const char *string, double rot, double hadj, 
-                 renderer_solid &ren_solid, renderer &ren, unsigned int id) {
-    agg::scanline_u8 sl;
+                 renderer_solid &ren_solid, renderer &ren, scanline &sl, unsigned int id,
+                 raster &ras_clip, bool clip, agg::path_storage* recording_clip) {
     agg::rasterizer_scanline_aa<> ras;
     agg::conv_curve<font_manager_type::path_adaptor_type> curves(get_manager().path_adaptor());
     curves.approximation_scale(2.0);
@@ -303,19 +303,23 @@ public:
               switch(glyph->data_type) {
               default: break;
               case agg::glyph_data_gray8:
-                agg::render_scanlines(get_manager().gray8_adaptor(), 
-                                      get_manager().gray8_scanline(), 
-                                      ren_solid);
+                render<agg::scanline_u8>(get_manager().gray8_adaptor(), ras_clip, 
+                                         sl, ren_solid, 
+                                         clip);
                 break;
                 
               case agg::glyph_data_color:
-                renderColourGlyph(glyph, x + x_offset, y + y_offset, rot, ren, scaling_buffer[font_buffer[text_run_start]]);
+                renderColourGlyph<TARGET>(glyph, x + x_offset, y + y_offset, rot, ren, sl, scaling_buffer[font_buffer[text_run_start]], ras_clip, clip);
                 break;
                 
               case agg::glyph_data_outline:
+                if (recording_clip != NULL) {
+                  recording_clip->concat_path(curves);
+                  break;
+                }
                 ras.reset();
                 ras.add_path(curves);
-                agg::render_scanlines(ras, sl, ren_solid);
+                render<agg::scanline_u8>(ras, ras_clip, sl, ren_solid, clip);
                 break;
               }
             }
@@ -345,11 +349,7 @@ private:
                              int symbol) {
     const char* fontfamily = family;
     if (symbol) {
-#if defined _WIN32
-      fontfamily = "Segoe UI Symbol";
-#else
-      fontfamily = "Symbol";
-#endif
+      fontfamily = "symbol";
     }
     return locate_font_with_features(fontfamily, italic, bold);
   }
@@ -373,15 +373,13 @@ private:
     return true;
   } 
   
-  template<typename ren>
-  void renderColourGlyph(const agg::glyph_cache* glyph, double x, double y, double rot, ren &renderer, double scaling) {
+  template<typename TARGET, typename ren, typename raster, typename scanline>
+  void renderColourGlyph(const agg::glyph_cache* glyph, double x, double y, 
+                         double rot, ren &renderer, scanline &sl, double scaling, raster &ras_clip, 
+                         bool clip) {
     int w = glyph->bounds.x2 - glyph->bounds.x1;
     int h = glyph->bounds.y1 - glyph->bounds.y2;
     agg::rendering_buffer rbuf(glyph->data, w, h, w * 4);
-    
-    unsigned char * buffer = new unsigned char[w * h * PIXFMT::pix_width];
-    agg::rendering_buffer rbuf_conv(buffer, w, h, w * PIXFMT::pix_width);
-    agg::convert<PIXFMT, pixfmt_col_glyph>(&rbuf_conv, &rbuf);
     
     agg::trans_affine img_mtx;
     img_mtx *= agg::trans_affine_translation(0, -glyph->bounds.y1);
@@ -405,13 +403,7 @@ private:
     typedef agg::span_interpolator_linear<> interpolator_type;
     interpolator_type interpolator(img_mtx);
     
-    typedef agg::image_accessor_clone<PIXFMT> img_source_type;
-    
-    PIXFMT img_pixf(rbuf_conv);
-    img_source_type img_src(img_pixf);
-    agg::span_allocator<typename PIXFMT::blender_type::color_type> sa;
     agg::rasterizer_scanline_aa<> ras;
-    agg::scanline_u8 sl;
     
     agg::path_storage rect;
     rect.remove_all();
@@ -422,24 +414,8 @@ private:
     rect.close_polygon();
     agg::conv_transform<agg::path_storage> tr(rect, src_mtx);
     ras.add_path(tr);
+    bool interpolate = scaling >= 1 || scaling < 0;
     
-    if (scaling >= 1 || scaling < 0) {
-      typedef agg::span_image_filter_rgba_bilinear<img_source_type, interpolator_type> span_gen_type;
-      span_gen_type sg(img_src, interpolator);
-      agg::render_scanlines_aa(ras, sl, renderer, sa, sg);
-    } else {
-      agg::image_filter_bilinear filter_kernel;
-      agg::image_filter_lut filter(filter_kernel, true);
-      
-      typedef agg::span_image_resample_rgba_affine<img_source_type> span_gen_type;
-      
-      span_gen_type sg(img_src, interpolator, filter);
-      sg.blur(1);
-      agg::render_scanlines_aa(ras, sl, renderer, sa, sg);
-    }
-    
-    delete [] buffer;
+    render_raster<pixfmt_col_glyph, TARGET>(rbuf, w, h, ras, ras_clip, sl, interpolator, renderer, interpolate, clip, !interpolate);
   }
 };
-
-#endif

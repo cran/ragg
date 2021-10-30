@@ -1,5 +1,4 @@
-#ifndef AGGDEVPNG_INCLUDED
-#define AGGDEVPNG_INCLUDED
+#pragma once
 
 extern "C" {
 #include <png.h>
@@ -8,6 +7,7 @@ extern "C" {
 #include "ragg.h"
 #include "AggDevice.h"
 #include "AggDevice16.h"
+#include "files.h"
 
 template<class PIXFMT>
 class AggDevicePng : public AggDevice<PIXFMT> {
@@ -22,7 +22,7 @@ public:
   bool savePage() {
     char buf[PATH_MAX+1];
     snprintf(buf, PATH_MAX, this->file.c_str(), this->pageno); buf[PATH_MAX] = '\0';
-    FILE* fd = fopen(buf, "wb");
+    FILE* fd = unicode_fopen(buf, "wb");
     if(!fd) return false;
     
     png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -91,7 +91,7 @@ public:
   bool savePage() {
     char buf[PATH_MAX+1];
     snprintf(buf, PATH_MAX, this->file.c_str(), this->pageno); buf[PATH_MAX] = '\0';
-    FILE* fd = fopen(buf, "wb");
+    FILE* fd = unicode_fopen(buf, "wb");
     if(!fd) return false;
     
     png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -146,5 +146,3 @@ public:
 
 typedef AggDevicePng16<pixfmt_type_48> AggDevicePng16NoAlpha;
 typedef AggDevicePng16<pixfmt_type_64> AggDevicePng16Alpha;
-
-#endif

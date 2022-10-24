@@ -1,7 +1,7 @@
 Type: Package
 Package: ragg
 Title: Graphic Devices Based on AGG
-Version: 1.2.3
+Version: 1.2.4
 Authors@R: c(
     person("Thomas Lin", "Pedersen", , "thomas.pedersen@rstudio.com", role = c("cre", "aut"),
            comment = c(ORCID = "0000-0002-5147-4711")),
@@ -32,7 +32,7 @@ Encoding: UTF-8
 RoxygenNote: 7.2.1
 SystemRequirements: C++11, freetype2, libpng, libtiff, libjpeg
 NeedsCompilation: yes
-Packaged: 2022-09-29 06:40:37 UTC; thomas
+Packaged: 2022-10-24 13:31:46 UTC; thomas
 Author: Thomas Lin Pedersen [cre, aut]
     (<https://orcid.org/0000-0002-5147-4711>),
   Maxim Shemanarev [aut, cph] (Author of AGG),
@@ -41,4 +41,4 @@ Author: Thomas Lin Pedersen [cre, aut]
   Spencer Garrett [ctb] (Contributor to AGG),
   RStudio [cph, fnd]
 Repository: CRAN
-Date/Publication: 2022-09-29 16:20:17 UTC
+Date/Publication: 2022-10-24 14:12:37 UTC

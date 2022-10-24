@@ -1,8 +1,8 @@
-30543ac34238a06072295296b7afefdf *DESCRIPTION
+807752dbb300e50897009add5f74be4c *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 c4d2281fabe13eaef0a344d82129875c *LICENSE.note
 a8964cbb59e44b15f9f801f95fca4957 *NAMESPACE
-35255ff0e96aeaf3d3fd7a7f7d7876a6 *NEWS.md
+c095222c00b86fa4ceda9955bf04c260 *NEWS.md
 fe51628635b95b31fb6015fed21a0bee *R/aaa.R
 0911b259ade882d077a21ebce8f67dbe *R/agg_dev.R
 6ad67b21797a8729bbe3fd705012d19e *R/ragg-package.R
@@ -21,7 +21,7 @@ e99f38936565865baef30b9c1af985ec *man/figures/README-unnamed-chunk-3-1.png
 5d857726ace7419381164b5e1d7e55f6 *man/figures/logo.png
 7e75b931ed254a52f583b2b0390660ae *man/ragg-package.Rd
 dee794901f050af1cb9cfb9d28d14032 *man/reexports.Rd
-0d5821fe763ea5bedfedd6f38822b269 *src/AggDevice.h
+3023027698ace6c84b47e8b4b70f6568 *src/AggDevice.h
 91df3b6ff836dbbad626f19056e5a760 *src/AggDevice16.h
 0123a73507e3de76f4e19801d2a696fa *src/AggDeviceCapture.h
 c17a65d3250a63c70bd408536ea06e78 *src/AggDeviceJpeg.h

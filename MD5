@@ -1,14 +1,14 @@
-807752dbb300e50897009add5f74be4c *DESCRIPTION
+23384e28d93fef23383e72523b73c546 *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 c4d2281fabe13eaef0a344d82129875c *LICENSE.note
 a8964cbb59e44b15f9f801f95fca4957 *NAMESPACE
-c095222c00b86fa4ceda9955bf04c260 *NEWS.md
-fe51628635b95b31fb6015fed21a0bee *R/aaa.R
+8bd5820d6ef0854bc0d29a049ad51758 *NEWS.md
+562d0e6f1023877db1b700eaeba73d79 *R/aaa.R
 0911b259ade882d077a21ebce8f67dbe *R/agg_dev.R
 6ad67b21797a8729bbe3fd705012d19e *R/ragg-package.R
 ba7fb6b3fcd1f96bed2fd108b24d7aa1 *README.md
 a8f4963fbeaee57d5b0c203b97680673 *cleanup
-797973aebd7e6abfd49c17fde3869f66 *configure
+7bda3dfb79fb9c9c76806e18ec35483e *configure
 d41d8cd98f00b204e9800998ecf8427e *configure.win
 5ba55b73356d48d2bbd1789a17af4ad4 *man/agg_capture.Rd
 f175729ff956e53dd4fd26626d4fa3ff *man/agg_jpeg.Rd
@@ -164,7 +164,7 @@ f156302e677f416f2db35fc3fdf461d3 *src/agg/include/agg_vpgen_clip_polygon.h
 2ea418c867d79494a521d8a1e857e98d *src/agg/include/agg_vpgen_segmentator.h
 369f51834747ac293f8d863e6d1dcc83 *src/agg/include/util/agg_color_conv.h
 58876ca3d28abd3650acebe8be57c91a *src/agg/src/agg_curves.cpp
-462305e0c47f0ebd8c07fc1a2c81b1ba *src/agg/src/agg_font_freetype.cpp
+2ef2f0c25d0a4279f1bc51144e32c6bd *src/agg/src/agg_font_freetype.cpp
 de7767170aebc51bf78d6115c0c5d987 *src/agg/src/agg_image_filters.cpp
 6715b5433ca26109ce139c7b64f13f57 *src/agg/src/agg_trans_affine.cpp
 b3a8cf1bd081d8f124035f06f1c18e23 *src/agg/src/agg_vcgen_dash.cpp

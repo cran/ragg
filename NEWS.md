@@ -1,3 +1,7 @@
+# ragg 1.3.2
+
+* Fix a bug in how groups are defined and recalled
+
 # ragg 1.3.1
 
 * Make sure the linejoin/linemitre setting is honored when drawing rectangles

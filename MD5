@@ -1,13 +1,12 @@
-0ac26d508493ef6f012d1af921631523 *DESCRIPTION
+c789230f2519a1f6394e9c6bbc478690 *DESCRIPTION
 e438d5be670df6b209257044ce501b52 *LICENSE
 c4d2281fabe13eaef0a344d82129875c *LICENSE.note
 a8964cbb59e44b15f9f801f95fca4957 *NAMESPACE
-eff6bb29159f7951c225f81a7a9b087a *NEWS.md
+d248d07a875f61dcbe2749d0be77843b *NEWS.md
 562d0e6f1023877db1b700eaeba73d79 *R/aaa.R
 0ab5cb1759f458829e8a9441878050fa *R/agg_dev.R
 6ad67b21797a8729bbe3fd705012d19e *R/ragg-package.R
 671ec4223882be381620a05124387bc3 *README.md
-a8f4963fbeaee57d5b0c203b97680673 *cleanup
 1ed965681b8260749244c7380a7b8770 *configure
 588c30b2afdad389d962ce0058b35c18 *man/agg_capture.Rd
 85be6a8aa7412963a15fd1ccb1e25f3f *man/agg_jpeg.Rd
@@ -20,7 +19,7 @@ f6c332e47ce39838302c65a6dfe02f04 *man/agg_tiff.Rd
 1c1743e84f76cc5f4d475825450f93a7 *man/figures/logo.png
 95d08e28d7eb747d2328b77c462fe588 *man/ragg-package.Rd
 dee794901f050af1cb9cfb9d28d14032 *man/reexports.Rd
-75695f9875a5094a60cea4be2436b16f *src/AggDevice.h
+49fbca7bc6641c54c1285ee8cded2517 *src/AggDevice.h
 1eb1499c98cc4088fb563ff645587f6f *src/AggDevice16.h
 73c8e621a72bf900f6bb21a613ff7c9d *src/AggDeviceCapture.h
 089b94198ad92042b772911b2376da85 *src/AggDeviceJpeg.h

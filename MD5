@@ -1,8 +1,8 @@
-c789230f2519a1f6394e9c6bbc478690 *DESCRIPTION
+c816df83346ba7e02a89f0a0eae5ff71 *DESCRIPTION
 e438d5be670df6b209257044ce501b52 *LICENSE
 c4d2281fabe13eaef0a344d82129875c *LICENSE.note
 a8964cbb59e44b15f9f801f95fca4957 *NAMESPACE
-d248d07a875f61dcbe2749d0be77843b *NEWS.md
+4a6d7ff86b63b02f130172b9ea3e7fe0 *NEWS.md
 562d0e6f1023877db1b700eaeba73d79 *R/aaa.R
 0ab5cb1759f458829e8a9441878050fa *R/agg_dev.R
 6ad67b21797a8729bbe3fd705012d19e *R/ragg-package.R
@@ -161,7 +161,7 @@ f156302e677f416f2db35fc3fdf461d3 *src/agg/include/agg_vpgen_clip_polygon.h
 2ea418c867d79494a521d8a1e857e98d *src/agg/include/agg_vpgen_segmentator.h
 369f51834747ac293f8d863e6d1dcc83 *src/agg/include/util/agg_color_conv.h
 58876ca3d28abd3650acebe8be57c91a *src/agg/src/agg_curves.cpp
-39d17ac7993a2f8c4ca0943164eea5f2 *src/agg/src/agg_font_freetype.cpp
+33b5f96c0b140d6a21a5ea399dc911d4 *src/agg/src/agg_font_freetype.cpp
 de7767170aebc51bf78d6115c0c5d987 *src/agg/src/agg_image_filters.cpp
 6715b5433ca26109ce139c7b64f13f57 *src/agg/src/agg_trans_affine.cpp
 b3a8cf1bd081d8f124035f06f1c18e23 *src/agg/src/agg_vcgen_dash.cpp
